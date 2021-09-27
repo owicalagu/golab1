@@ -25,7 +25,7 @@ func check(e error) {
 
 // questions reads in questions and corresponding answers from a CSV file into a slice of question structs.
 func questions() []question {
-	f, err := os.Open("quiz-questions.csv")
+	f, err := os.Open("/home/hh20889/compsys/golab1/quiz/quiz-questions.csv")
 	check(err)
 	reader := csv.NewReader(f)
 	table, err := reader.ReadAll()
@@ -54,5 +54,11 @@ func ask(s score, question question) score {
 }
 
 func main() {
-	// TODO: Write a quiz program
+	s := score(0)
+	for _, q := range questions() {
+		s = ask(s, q)
+	}
+
+	fmt.Print("Score: ")
+	fmt.Println(s)
 }
