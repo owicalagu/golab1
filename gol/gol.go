@@ -1,58 +1,45 @@
 package main
 
-func wminus(a, b, max int) int { // minus with wrapping
-	res := a - b
-	if res < 0 {
-		res = max + res + 1
-	}
-	return res
-}
-
-func wplus(a int, b, max int) int { // plus with wrapping
-	res := a + b
-	if res > max {
-		res = res - max - 1
-	}
-	return res
-}
-
-func sumCellNeighbours(col, pos, width, height int, world [][]byte) int {
-	ret := byte(0)
-
-	ret += world[col][wplus(pos, 1, height)]  // u
-	ret += world[col][wminus(pos, 1, height)] // d
-	ret += world[wminus(col, 1, width)][pos]  // l
-	ret += world[wplus(col, 1, width)][pos]   // r
-
-	ret += world[wminus(col, 1, width)][wplus(pos, 1, height)]  // ul
-	ret += world[wplus(col, 1, width)][wplus(pos, 1, height)]   // ur
-	ret += world[wminus(col, 1, width)][wminus(pos, 1, height)] // dl
-	ret += world[wplus(col, 1, width)][wminus(pos, 1, height)]  // dr
-
-	return int(ret) / 255
-}
-
-func calculateNextState(p golParams, world [][]byte) [][]byte {
-	width := p.imageWidth
-	height := p.imageHeight
-	turns := p.turns
-
-	newworld := world
-
-	for i, col := range world {
-		for j, val := range col {
-			sum := sumCellNeighbours(i, j, width, height, world)
-			if val == 255 { // live
-				if sum < 2 {
-					newworld[i][j] = 0
-				}
+func updateCell(world [][]byte, x, y int, p golParams) byte {
+	alive := 0
+	for i := -1; i <= 1; i++ {
+		for j := -1; j <= 1; j++ {
+			if (j != 0 || i != 0) && world[(y+j+p.imageHeight)%p.imageHeight][(x+i+p.imageWidth)%p.imageWidth] == 255 {
+				alive++
 			}
 		}
 	}
 
-	return world
+	if alive == 3 || alive == 2 && world[y][x] == 255 {
+		return 255
+	} else {
+		return 0
+	}
+}
+
+func calculateNextState(p golParams, world [][]byte) [][]byte {
+	newState := make([][]byte, p.imageHeight)
+	for i := range newState {
+		newState[i] = make([]byte, p.imageWidth)
+	}
+	for y := 0; y < p.imageHeight; y++ {
+		for x := 0; x < p.imageWidth; x++ {
+			newState[y][x] = updateCell(world, x, y, p)
+		}
+	}
+
+	return newState
 }
 
 func calculateAliveCells(p golParams, world [][]byte) []cell {
-	return []cell{}
+	var cells []cell
+
+	for i, col := range world {
+		for j, val := range col {
+			if val != 0 {
+				cells = append(cells, cell{j, i})
+			}
+		}
+	}
+	return cells
 }
